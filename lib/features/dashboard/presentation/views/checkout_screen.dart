@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zello/core/theme/app_theme.dart';
 import 'package:zello/features/dashboard/application/cart_provider.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:zello/features/admin/domain/order.dart' as order_domain;
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
 
@@ -21,15 +23,47 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     super.dispose();
   }
 
-  void _placeOrder() {
+  void _placeOrder() async {
     if (_addressController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a delivery address')));
       return;
     }
 
-    // Process logic here: Usually talks to a backend, saves the Order.
-    // We will clear the cart and pop to a success screen or home.
+    final cartItems = ref.read(cartProvider);
+    if (cartItems.isEmpty) return;
+
+    final total = ref.read(cartProvider.notifier).cartTotal;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    
+    // Create new order in Firestore
+    try {
+      final orderRef = FirebaseFirestore.instance.collection('orders').doc();
+      
+      final newOrder = order_domain.Order(
+        id: orderRef.id,
+        userId: currentUser?.uid ?? 'guest',
+        customerName: currentUser?.displayName ?? 'User',
+        totalAmount: total,
+        status: order_domain.OrderStatus.pending,
+        createdAt: DateTime.now(),
+        items: cartItems.map((item) => {
+          'productName': item.product.name,
+          'quantity': item.quantity,
+          'price': item.product.price,
+        }).toList(),
+      );
+
+      await orderRef.set(newOrder.toJson());
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to place order: $e')));
+      }
+      return;
+    }
+
     ref.read(cartProvider.notifier).clearCart();
+    
+    if (!mounted) return;
     
     showDialog(
       context: context,
@@ -44,15 +78,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               const SizedBox(height: 16),
               const Text('Order Placed Successfully!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              const Text('Your order has been recorded via Manual Payment. You will be notified when it ships.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+              const Text('Your order has been recorded. You will be notified when it ships.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Close dialog
                     Navigator.pop(context);
-                    // Go Home
                     context.go('/dashboard');
                   },
                   child: const Text('Back to Home'),

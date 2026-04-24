@@ -6,6 +6,8 @@ class AppUser {
   final DateTime joinDate;
   final int totalOrders;
   final bool isDisabled;
+  final String? savedLocation;
+  final String? fcmToken;
 
   AppUser({
     required this.id,
@@ -15,6 +17,8 @@ class AppUser {
     required this.joinDate,
     required this.totalOrders,
     this.isDisabled = false,
+    this.savedLocation,
+    this.fcmToken,
   });
 
   AppUser copyWith({
@@ -25,6 +29,8 @@ class AppUser {
     DateTime? joinDate,
     int? totalOrders,
     bool? isDisabled,
+    String? savedLocation,
+    String? fcmToken,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -34,6 +40,8 @@ class AppUser {
       joinDate: joinDate ?? this.joinDate,
       totalOrders: totalOrders ?? this.totalOrders,
       isDisabled: isDisabled ?? this.isDisabled,
+      savedLocation: savedLocation ?? this.savedLocation,
+      fcmToken: fcmToken ?? this.fcmToken,
     );
   }
 
@@ -46,6 +54,8 @@ class AppUser {
       joinDate: json['joinDate'] != null ? DateTime.parse(json['joinDate']) : DateTime.now(),
       totalOrders: json['totalOrders'] as int? ?? 0,
       isDisabled: json['isDisabled'] as bool? ?? false,
+      savedLocation: json['savedLocation'] as String?,
+      fcmToken: json['fcmToken'] as String?,
     );
   }
 
@@ -58,6 +68,8 @@ class AppUser {
       'joinDate': joinDate.toIso8601String(),
       'totalOrders': totalOrders,
       'isDisabled': isDisabled,
+      'savedLocation': savedLocation,
+      'fcmToken': fcmToken,
     };
   }
 }

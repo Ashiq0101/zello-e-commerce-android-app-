@@ -18,6 +18,7 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
   final PageController _pageController = PageController();
   int _currentBannerIndex = 0;
   Timer? _carouselTimer;
+  String? _selectedCategoryId;
 
   final List<String> mockBanners = [
     'https://via.placeholder.com/800x300/6C63FF/ffffff?text=Summer+Sale+50%25+Off',
@@ -151,36 +152,56 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
                   final cat = categories[index];
-                  return Container(
-                    width: 70,
-                    margin: const EdgeInsets.only(right: 16),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: ClipOval(
-                            child: Image.network(
-                              cat.imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.category, color: Colors.grey),
+                  final isSelected = _selectedCategoryId == cat.id;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (_selectedCategoryId == cat.id) {
+                          _selectedCategoryId = null;
+                        } else {
+                          _selectedCategoryId = cat.id;
+                        }
+                      });
+                    },
+                    child: Container(
+                      width: 70,
+                      margin: const EdgeInsets.only(right: 16),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.grey.shade100,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected ? AppTheme.primaryColor : Colors.grey.shade200,
+                                width: isSelected ? 2 : 1,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: Image.network(
+                                cat.imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Icon(Icons.category, color: isSelected ? AppTheme.primaryColor : Colors.grey),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          cat.name,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text(
+                            cat.name,
+                            style: TextStyle(
+                              fontSize: 12, 
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              color: isSelected ? AppTheme.primaryColor : Colors.black,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -216,7 +237,16 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
       height: 240,
       child: productsAsync.when(
         data: (products) {
-          final activeProducts = products.where((p) => p.isActive).toList();
+          final activeProducts = products.where((p) {
+            if (!p.isActive) return false;
+            if (_selectedCategoryId != null && p.categoryId != _selectedCategoryId) return false;
+            return true;
+          }).toList();
+          
+          if (activeProducts.isEmpty) {
+            return const Center(child: Text('No products found for this category.'));
+          }
+
           return ListView.builder(
             padding: const EdgeInsets.only(left: 16),
             scrollDirection: Axis.horizontal,
@@ -245,9 +275,17 @@ class _HomeDashboardViewState extends ConsumerState<HomeDashboardView> {
       child: productsAsync.when(
         data: (products) {
           // Mock sorting for popularity
-          final popProducts = products.where((p) => p.isActive).toList();
+          final popProducts = products.where((p) {
+            if (!p.isActive) return false;
+            if (_selectedCategoryId != null && p.categoryId != _selectedCategoryId) return false;
+            return true;
+          }).toList();
           popProducts.sort((a, b) => b.avgRating.compareTo(a.avgRating));
           
+          if (popProducts.isEmpty) {
+            return const Center(child: Text('No products found for this category.'));
+          }
+
           return ListView.builder(
             padding: const EdgeInsets.only(left: 16),
             scrollDirection: Axis.horizontal,

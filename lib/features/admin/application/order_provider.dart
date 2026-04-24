@@ -1,62 +1,43 @@
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zello/features/admin/domain/order.dart';
 
 class OrderNotifier extends Notifier<AsyncValue<List<Order>>> {
+  StreamSubscription? _subscription;
+
   @override
   AsyncValue<List<Order>> build() {
-    _fetchOrders();
+    _subscribeToOrders();
     return const AsyncValue.loading();
   }
 
-  Future<void> _fetchOrders() async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    
-    final mockOrders = [
-      Order(
-        id: 'ORD-1001',
-        customerName: 'Alice Smith',
-        totalAmount: 120.50,
-        status: OrderStatus.pending,
-        createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      ),
-      Order(
-        id: 'ORD-1002',
-        customerName: 'Bob Jones',
-        totalAmount: 89.99,
-        status: OrderStatus.confirmed,
-        createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-      ),
-      Order(
-        id: 'ORD-1003',
-        customerName: 'Charlie Brown',
-        totalAmount: 250.00,
-        status: OrderStatus.shipped,
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-      Order(
-        id: 'ORD-1004',
-        customerName: 'Diana Prince',
-        totalAmount: 45.00,
-        status: OrderStatus.delivered,
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      ),
-    ];
-    
-    // Sort newest first
-    mockOrders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    state = AsyncValue.data(mockOrders);
+  void _subscribeToOrders() {
+    _subscription?.cancel();
+    _subscription = FirebaseFirestore.instance
+        .collection('orders')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen((snapshot) {
+      final orders = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return Order.fromJson(data);
+      }).toList();
+      state = AsyncValue.data(orders);
+    }, onError: (error) {
+      state = AsyncValue.error(error, StackTrace.current);
+    });
   }
 
   Future<void> updateOrderStatus(String orderId, OrderStatus newStatus) async {
-    final currentList = state.value ?? [];
-    final updatedList = currentList.map((o) {
-      if (o.id == orderId) {
-        return o.copyWith(status: newStatus);
-      }
-      return o;
-    }).toList();
-    
-    state = AsyncValue.data(updatedList);
+    try {
+      await FirebaseFirestore.instance.collection('orders').doc(orderId).update({
+        'status': newStatus.toString().split('.').last.toLowerCase(),
+      });
+    } catch (e) {
+      print('Error updating order status: $e');
+    }
   }
 }
 

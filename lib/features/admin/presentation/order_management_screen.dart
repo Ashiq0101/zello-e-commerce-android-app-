@@ -56,7 +56,7 @@ class _OrderManagementScreenState extends ConsumerState<OrderManagementScreen> {
               : orders.where((o) => o.status == _statusFilter).toList();
 
           if (filteredOrders.isEmpty) {
-            return const Center(child: Text('No orders found.'));
+            return const Center(child: Text('📭 No orders found.'));
           }
           return ListView.builder(
             padding: const EdgeInsets.all(16),

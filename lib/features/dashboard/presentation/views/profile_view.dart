@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:zello/core/theme/app_theme.dart';
 import 'package:zello/features/auth/application/auth_provider.dart';
 import 'package:zello/features/admin/application/user_provider.dart';
+import 'package:zello/features/dashboard/application/settings_provider.dart';
 
 class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
@@ -94,58 +95,87 @@ class ProfileView extends ConsumerWidget {
           // Action Buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                _buildProfileOption(
-                  icon: Icons.receipt_long,
-                  title: 'Order History',
-                  subtitle: 'View your recent purchases',
-                  onTap: () {
-                    context.push('/order-history');
-                  },
-                ),
-                _buildProfileOption(
-                  icon: Icons.location_on,
-                  title: 'Saved Addresses',
-                  subtitle: 'Manage your delivery locations',
-                  onTap: () {},
-                ),
-                _buildProfileOption(
-                  icon: Icons.notifications,
-                  title: 'Notifications',
-                  subtitle: 'Manage your alerts',
-                  onTap: () {},
-                ),
-                _buildProfileOption(
-                  icon: Icons.dark_mode,
-                  title: 'Dark Mode',
-                  subtitle: 'Toggle application theme',
-                  trailing: Switch(
-                    value: false, // Defaulting to light mode for now
-                    onChanged: (val) {},
-                    activeColor: AppTheme.primaryColor,
-                  ),
-                  onTap: () {},
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(color: Colors.red),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            child: Consumer(
+              builder: (context, ref, child) {
+                final settingsAsync = ref.watch(settingsProvider);
+                final settings = settingsAsync.value;
+
+                if (settings == null) {
+                  return const CircularProgressIndicator();
+                }
+
+                return Column(
+                  children: [
+                    _buildProfileOption(
+                      icon: Icons.receipt_long,
+                      title: 'Order History',
+                      subtitle: 'View your recent purchases',
+                      onTap: () {
+                        context.push('/order-history');
+                      },
                     ),
-                    icon: const Icon(Icons.logout, color: Colors.red),
-                    label: const Text('Logout', style: TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
-                    onPressed: () {
-                      ref.read(authControllerProvider).logout();
-                      context.go('/');
-                    },
-                  ),
-                ),
-                const SizedBox(height: 100), // Spacing for bottom nav
-              ],
+                    _buildProfileOption(
+                      icon: Icons.location_on,
+                      title: 'Saved Location',
+                      subtitle: settings.isLocationSaved && currentUser.savedLocation != null 
+                          ? currentUser.savedLocation! 
+                          : 'Manage your delivery locations',
+                      trailing: Switch(
+                        value: settings.isLocationSaved,
+                        onChanged: (val) {
+                          ref.read(settingsProvider.notifier).toggleLocation(val);
+                        },
+                        activeColor: AppTheme.primaryColor,
+                      ),
+                      onTap: () {},
+                    ),
+                    _buildProfileOption(
+                      icon: Icons.notifications,
+                      title: 'Notifications',
+                      subtitle: 'Manage your alerts',
+                      trailing: Switch(
+                        value: settings.isNotificationsEnabled,
+                        onChanged: (val) {
+                          ref.read(settingsProvider.notifier).toggleNotifications(val);
+                        },
+                        activeColor: AppTheme.primaryColor,
+                      ),
+                      onTap: () {},
+                    ),
+                    _buildProfileOption(
+                      icon: Icons.dark_mode,
+                      title: 'Dark Mode',
+                      subtitle: 'Toggle application theme',
+                      trailing: Switch(
+                        value: settings.isDarkMode,
+                        onChanged: (val) {
+                          ref.read(settingsProvider.notifier).toggleDarkMode(val);
+                        },
+                        activeColor: AppTheme.primaryColor,
+                      ),
+                      onTap: () {},
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: Colors.red),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        ),
+                        icon: const Icon(Icons.logout, color: Colors.red),
+                        label: const Text('Logout', style: TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
+                        onPressed: () {
+                          ref.read(authControllerProvider).logout();
+                          context.go('/');
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 100), // Spacing for bottom nav
+                  ],
+                );
+              }
             ),
           ),
         ],

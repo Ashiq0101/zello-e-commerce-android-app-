@@ -19,12 +19,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _login() async {
     setState(() => _isLoading = true);
-    await ref.read(authControllerProvider).login(
-      _emailController.text, 
-      _passwordController.text
-    );
-    if(mounted) {
-      setState(() => _isLoading = false);
+    try {
+      await ref.read(authControllerProvider).login(
+        _emailController.text, 
+        _passwordController.text
+      );
+      if(mounted) {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if(mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        );
+      }
     }
   }
 
