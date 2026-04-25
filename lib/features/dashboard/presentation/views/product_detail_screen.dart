@@ -145,6 +145,15 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '🏷️ Brand: ${widget.product.brandName}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [

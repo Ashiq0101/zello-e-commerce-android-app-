@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zello/features/admin/domain/app_user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserNotifier extends Notifier<AsyncValue<List<AppUser>>> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -72,7 +73,15 @@ final adminUserProvider = NotifierProvider<UserNotifier, AsyncValue<List<AppUser
 final currentUserProvider = Provider<AppUser?>((ref) {
   final users = ref.watch(adminUserProvider).value;
   if (users == null || users.isEmpty) return null;
-  // Currently active user based on most recent join date (as a placeholder for actual logged-in user auth ID)
+  
+  final authUser = FirebaseAuth.instance.currentUser;
+  if (authUser != null && authUser.email != null) {
+    try {
+      return users.firstWhere((u) => u.email == authUser.email);
+    } catch (_) {}
+  }
+  
+  // Fallback
   final activeList = users.where((u) => !u.isDisabled).toList();
   activeList.sort((a,b) => b.joinDate.compareTo(a.joinDate));
   return activeList.isNotEmpty ? activeList.first : null;

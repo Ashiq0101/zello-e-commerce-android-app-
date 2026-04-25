@@ -7,6 +7,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
+import 'package:zello/features/admin/application/user_provider.dart';
 
 class SettingsState {
   final bool isDarkMode;
@@ -58,7 +59,7 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
 
   Future<void> toggleLocation(bool enable) async {
     state = const AsyncLoading();
-    final user = FirebaseAuth.instance.currentUser;
+    final user = ref.read(currentUserProvider);
 
     if (enable) {
       var status = await Permission.location.request();
@@ -72,7 +73,7 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
             final address = "${place.subLocality?.isNotEmpty == true ? place.subLocality : place.locality}, ${place.administrativeArea}";
             
             if (user != null) {
-              await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+              await FirebaseFirestore.instance.collection('users').doc(user.id).update({
                 'savedLocation': address,
               });
             }
@@ -88,7 +89,7 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
       }
     } else {
       if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        await FirebaseFirestore.instance.collection('users').doc(user.id).update({
           'savedLocation': FieldValue.delete(),
         });
       }
@@ -99,7 +100,7 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
 
   Future<void> toggleNotifications(bool enable) async {
     state = const AsyncLoading();
-    final user = FirebaseAuth.instance.currentUser;
+    final user = ref.read(currentUserProvider);
 
     if (enable) {
       var status = await Permission.notification.request();
@@ -107,7 +108,7 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
         try {
           final fcmToken = await FirebaseMessaging.instance.getToken();
           if (user != null && fcmToken != null) {
-            await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+            await FirebaseFirestore.instance.collection('users').doc(user.id).update({
               'fcmToken': fcmToken,
             });
           }
@@ -122,7 +123,7 @@ class SettingsNotifier extends AsyncNotifier<SettingsState> {
       }
     } else {
       if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        await FirebaseFirestore.instance.collection('users').doc(user.id).update({
           'fcmToken': FieldValue.delete(),
         });
       }

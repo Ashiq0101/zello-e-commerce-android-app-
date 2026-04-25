@@ -113,6 +113,13 @@ class ProductCard extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
+                  const SizedBox(height: 2),
+                  Text(
+                    product.brandName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                   const SizedBox(height: 4),
                   Row(
                     children: [

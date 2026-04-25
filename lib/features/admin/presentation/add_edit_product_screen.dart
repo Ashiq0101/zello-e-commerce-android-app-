@@ -16,6 +16,7 @@ class AddEditProductScreen extends ConsumerStatefulWidget {
 class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameCtrl;
+  late TextEditingController _brandCtrl;
   late TextEditingController _descCtrl;
   late TextEditingController _priceCtrl;
   late TextEditingController _stockCtrl;
@@ -26,6 +27,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.product?.name ?? '');
+    _brandCtrl = TextEditingController(text: widget.product?.brandName ?? '');
     _descCtrl = TextEditingController(text: widget.product?.description ?? '');
     _priceCtrl = TextEditingController(text: widget.product?.price.toString() ?? '');
     _stockCtrl = TextEditingController(text: widget.product?.stock.toString() ?? '0');
@@ -36,6 +38,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _brandCtrl.dispose();
     _descCtrl.dispose();
     _priceCtrl.dispose();
     _stockCtrl.dispose();
@@ -53,6 +56,7 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
       final newProduct = Product(
         id: widget.product?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameCtrl.text.trim(),
+        brandName: _brandCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         price: double.parse(_priceCtrl.text.trim()),
         stock: int.parse(_stockCtrl.text.trim()),
@@ -90,6 +94,12 @@ class _AddEditProductScreenState extends ConsumerState<AddEditProductScreen> {
                 controller: _nameCtrl,
                 decoration: const InputDecoration(labelText: 'Product Name', border: OutlineInputBorder()),
                 validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _brandCtrl,
+                decoration: const InputDecoration(labelText: 'Brand Name', border: OutlineInputBorder()),
+                validator: (val) => val == null || val.trim().isEmpty ? '❌ Please enter the brand name.' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
