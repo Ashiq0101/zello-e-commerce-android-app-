@@ -4,12 +4,6 @@ A full-stack mobile e-commerce application built with **Flutter** and **Firebase
 
 ---
 
-## 📱 Screenshots
-
-> _Add your app screenshots here_
-
----
-
 ## ✨ Features
 
 ### 🛍️ Customer Features
